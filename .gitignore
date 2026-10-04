@@ -1,0 +1,14 @@
+venv/
+build/
+build_pyinstaller/
+dist/
+dmg_staging/
+__pycache__/
+*.pyc
+*.log
+*.pid
+active_state.json
+config.json
+AppIcon.iconset/
+Th3Majed.dmg
+.DS_Store

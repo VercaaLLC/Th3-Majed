@@ -1,0 +1,6 @@
+rumps
+psutil
+pyobjc-framework-Cocoa
+pyobjc-framework-WebKit
+pyobjc-framework-Quartz
+pyinstaller

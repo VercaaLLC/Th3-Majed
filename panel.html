@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --bg: #f5f5f7;
+  --card-bg: #ffffff;
+  --text: #1d1d1f;
+  --text-dim: #6e6e73;
+  --border: rgba(0,0,0,0.08);
+  --accent: #0071e3;
+  --green: #30b350;
+  --yellow: #d9a400;
+  --orange: #e8820c;
+  --red: #e5484d;
+  --track: rgba(0,0,0,0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --card-bg: #2c2c2e;
+    --text: #f5f5f7;
+    --text-dim: #9b9ba1;
+    --border: rgba(255,255,255,0.09);
+    --track: rgba(255,255,255,0.13);
+  }
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  width: 360px;
+}
+#panel { padding: 14px; }
+header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.title-row { display: flex; align-items: center; gap: 7px; }
+.title-row .name { font-size: 15px; font-weight: 650; letter-spacing: -0.2px; }
+.verdict { color: var(--text-dim); font-size: 12px; line-height: 1.4; }
+.stats-row { display: flex; gap: 8px; margin: 10px 0 12px; }
+.pill { background: var(--card-bg); border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px; font-size: 10.5px; color: var(--text-dim); flex: 1; }
+.pill b { color: var(--text); font-size: 13px; font-weight: 600; display: block; margin-top: 1px; }
+.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.row { display: flex; align-items: center; gap: 9px; }
+.icon { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; background: var(--track); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
+.icon img { width: 100%; height: 100%; object-fit: contain; }
+.info { flex: 1; min-width: 0; }
+.name-line { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.gname { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
+.cpu { font-weight: 650; font-size: 13px; flex-shrink: 0; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot.green { background: var(--green); }
+.dot.yellow { background: var(--yellow); }
+.dot.orange { background: var(--orange); }
+.dot.red { background: var(--red); }
+.meta { color: var(--text-dim); font-size: 11px; margin-top: 1px; }
+.sparkline { margin-top: 7px; width: 100%; height: 22px; display: block; }
+.membar { height: 4px; border-radius: 2px; background: var(--track); margin-top: 7px; overflow: hidden; }
+.membar > div { height: 100%; background: var(--accent); border-radius: 2px; }
+.actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+button { font: inherit; font-size: 11px; font-weight: 500; border: none; border-radius: 7px; padding: 5px 9px; cursor: pointer; background: var(--track); color: var(--text); transition: opacity .1s; }
+button.danger { background: var(--red); color: white; }
+button.safe { background: var(--accent); color: white; }
+button:active { opacity: 0.6; }
+details { margin-top: 7px; }
+summary { cursor: pointer; font-size: 11px; color: var(--text-dim); outline: none; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary:before { content: "▸ "; }
+details[open] summary:before { content: "▾ "; }
+.subproc-block { border-top: 1px solid var(--border); padding: 6px 2px; }
+.subproc { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); }
+.subproc-block .actions button { padding: 4px 7px; font-size: 10.5px; }
+.protected-note { font-size: 11px; color: var(--text-dim); font-style: italic; margin-top: 7px; }
+.active-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
+.active-item button { font-size: 10.5px; }
+.footer { display: flex; justify-content: space-between; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
+.footer a { color: var(--text-dim); font-size: 11px; text-decoration: none; cursor: pointer; }
+.footer a:hover { color: var(--accent); }
+#empty-active { color: var(--text-dim); font-size: 11.5px; }
+.section-title { font-weight: 600; font-size: 11.5px; margin-bottom: 6px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <header>
+    <div class="title-row">
+      <span style="font-size:17px;">🖥️</span>
+      <span class="name">Th3 Majed</span>
+    </div>
+    <div class="verdict" id="verdict">Loading…</div>
+  </header>
+  <div class="stats-row">
+    <div class="pill">GPU<b id="gpu-val">—</b></div>
+    <div class="pill">System busy<b id="busy-val">—</b></div>
+    <div class="pill">Load<b id="load-val">—</b></div>
+  </div>
+  <div id="groups"></div>
+  <div class="card">
+    <div class="section-title">Active interventions</div>
+    <div id="active"><span id="empty-active">Nothing paused or throttled right now</span></div>
+  </div>
+  <div class="footer">
+    <a onclick="bridge('refresh')">Refresh now</a>
+    <a onclick="bridge('reveal_log')">Log</a>
+    <a onclick="bridge('about')">About</a>
+    <a onclick="bridge('quit')" style="color:var(--red)">Quit</a>
+  </div>
+</div>
+<script>
+function post(msg) {
+  try { window.webkit.messageHandlers.bridge.postMessage(msg); } catch (e) { console.log("bridge error", e); }
+}
+function bridge(action, extra) {
+  post(Object.assign({action: action}, extra || {}));
+}
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;");
+}
+function sparkline(history) {
+  if (!history || history.length < 2) return "";
+  const w = 330, h = 20, max = Math.max(60, ...history);
+  const step = w / (history.length - 1);
+  const pts = history.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`).join(" ");
+  return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" style="stroke:var(--accent); stroke-width:1.5" />
+  </svg>`;
+}
+function actionsHtml(group) {
+  if (group.protected) {
+    const who = group.name === "Th3 Majed" ? "this app itself" : "a process your whole session depends on";
+    return `<div class="protected-note">Protected — ${esc(who)}, killing it would crash your session.</div>`;
+  }
+  const multi = group.members.length > 1;
+  const gnameJs = esc(group.name).replace(/\\/g, "\\\\");
+  if (multi) {
+    return `<div class="actions">
+      <button class="danger" onclick='bridge("kill_group", {group:"${gnameJs}"})'>Kill all ${group.members.length}</button>
+      <button onclick='bridge("pause_group", {group:"${gnameJs}", seconds:120})'>Pause 2m (all)</button>
+      <button class="safe" onclick='bridge("throttle_group", {group:"${gnameJs}"})'>Throttle all ~10%</button>
+    </div>`;
+  }
+  const m = group.members[0];
+  const nameJs = esc(m.name).replace(/\\/g, "\\\\");
+  return `<div class="actions">
+    <button class="danger" onclick='bridge("kill", {pid:${m.pid}, name:"${nameJs}"})'>Kill now</button>
+    <button onclick='bridge("stop_permanent", {pid:${m.pid}, name:"${nameJs}"})'>Stop permanently</button>
+    <button onclick='bridge("pause", {pid:${m.pid}, name:"${nameJs}", seconds:120})'>Pause 2m</button>
+    <button class="safe" onclick='bridge("throttle", {pid:${m.pid}, name:"${nameJs}"})'>Throttle ~10%</button>
+  </div>`;
+}
+function subprocActions(m) {
+  const nameJs = esc(m.name).replace(/\\/g, "\\\\");
+  return `<div class="actions" style="margin-top:5px">
+    <button class="danger" onclick='bridge("kill", {pid:${m.pid}, name:"${nameJs}"})'>Kill</button>
+    <button onclick='bridge("stop_permanent", {pid:${m.pid}, name:"${nameJs}"})'>Stop perm.</button>
+    <button onclick='bridge("pause", {pid:${m.pid}, name:"${nameJs}", seconds:120})'>Pause 2m</button>
+    <button class="safe" onclick='bridge("throttle", {pid:${m.pid}, name:"${nameJs}"})'>Throttle ~10%</button>
+  </div>`;
+}
+function groupHtml(group) {
+  const iconHtml = group.icon ? `<img src="${group.icon}">` : (group.band === "red" ? "🔥" : "⚙️");
+  const sub = group.members.length > 1
+    ? `<details><summary>${group.members.length} processes</summary>${group.members.map(m =>
+        `<div class="subproc-block">
+           <div class="subproc"><span>${esc(m.name)} (pid ${m.pid})</span><span>${m.cpu}%</span></div>
+           ${subprocActions(m)}
+         </div>`).join("")}</details>`
+    : "";
+  return `<div class="card">
+    <div class="row">
+      <div class="icon">${iconHtml}</div>
+      <div class="info">
+        <div class="name-line">
+          <span class="gname"><span class="dot ${group.band}"></span>${esc(group.name)}${group.members.length > 1 ? ` (${group.members.length})` : ""}</span>
+          <span class="cpu">${group.cpu.toFixed(0)}%</span>
+        </div>
+        <div class="meta">${group.mem.toFixed(1)}% memory</div>
+      </div>
+    </div>
+    ${sparkline(group.history)}
+    <div class="membar"><div style="width:${Math.min(100, group.mem * 2.5).toFixed(0)}%"></div></div>
+    ${actionsHtml(group)}
+    ${sub}
+  </div>`;
+}
+function update(state) {
+  document.getElementById("verdict").textContent = state.verdict;
+  document.getElementById("gpu-val").textContent = state.gpu != null ? state.gpu + "%" : "n/a";
+  document.getElementById("busy-val").textContent = state.thermal ? state.thermal.busy.toFixed(0) + "%" : "n/a";
+  document.getElementById("load-val").textContent = state.thermal ? state.thermal.load1.toFixed(1) + "/" + state.thermal.ncpu : "n/a";
+  document.getElementById("groups").innerHTML = state.groups.map(groupHtml).join("");
+  const activeEl = document.getElementById("active");
+  const items = [];
+  (state.active.paused || []).forEach(p => items.push(
+    `<div class="active-item"><span>⏸ ${esc(p.name)} (pid ${p.pid})</span><button onclick='bridge("resume", {pid:${p.pid}, name:"${esc(p.name)}"})'>Resume</button></div>`));
+  (state.active.throttled || []).forEach(t => items.push(
+    `<div class="active-item"><span>🐢 ${esc(t.name)} (pid ${t.pid})</span><button onclick='bridge("unthrottle", {pid:${t.pid}})'>Stop</button></div>`));
+  activeEl.innerHTML = items.length ? items.join("") : '<span id="empty-active">Nothing paused or throttled right now</span>';
+}
+window.updateState = function (json) {
+  try { update(JSON.parse(json)); } catch (e) { console.log("update error", e); }
+};
+</script>
+</body>
+</html>
