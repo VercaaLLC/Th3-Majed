@@ -38,7 +38,7 @@ import rumps
 from AppKit import NSAlert, NSApp
 from Foundation import NSProcessInfo
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 NSAlertFirstButtonReturn = 1000
 
 
@@ -1256,6 +1256,12 @@ class Engine:
             app.forceTerminate()
             log(f"FORCE QUIT pid={pid} name={name}")
         else:
+            mem = ""
+            slot = self.all_groups.get(name)
+            if slot:
+                mem = f" It is using about {round(slot['mem'] / 1048576):,} MB."
+            if native_alert("Th3 Majed", f"Quit {name}?{mem} If it has unsaved work it will ask you first.", ok="Quit", cancel="Cancel") != NSAlertFirstButtonReturn:
+                return
             app.terminate()
             log(f"QUIT requested pid={pid} name={name}")
         self._toast("ok", f"Asked {name} to quit" if not force else f"Force-quit {name}")

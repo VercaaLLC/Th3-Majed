@@ -32,7 +32,7 @@ Th3 Majed sits beside the clock. Click it and you get live vitals (CPU, GPU, mem
   - **Aggressive:** above 30% for 12 s.
 
   It hands control back when the app calms down or the moment you switch to it, never acts on protected or system-owned processes, and skips anything on your **Never touch** list.
-- **Memory:** pressure, used/total, swap and the heaviest apps, each with a **Quit** button (a polite quit, so apps with unsaved work ask first), plus **Quit N idle apps**.
+- **Memory:** pressure, used/total, swap and the heaviest apps, each with a **Quit** button (after a confirmation, and it is a polite quit, so apps with unsaved work ask first), plus **Quit N idle apps**.
 - **Power:** battery, plugged-in state and Low Power Mode status, with a shortcut to Battery settings.
 - **Under control:** everything Th3 Majed is currently limiting, with **Release** and **Release all**.
 
@@ -46,7 +46,7 @@ Refresh rate (1s / 2s / 5s), alert level (50 / 60 / 80%), notifications, launch 
 | **Efficiency mode** | Puts the process in macOS's background priority class with `setpriority(PRIO_DARWIN_PROCESS, PRIO_DARWIN_BG)`, the same policy the `taskpolicy -b` command applies. The scheduler then prefers the efficiency cores for it and gives everything else priority. The process keeps running; nothing is frozen. In testing, busy processes dropped from ~99% to ~29% CPU whenever the machine was saturated. After applying it, the kernel's own process flag is read back, and success is only reported if it took. |
 | **Limit to ~10%** | Duty-cycles the process with `SIGSTOP`/`SIGCONT` so it can use roughly a tenth of a core. Always leaves the process running when it ends. |
 | **Pause** | `SIGSTOP`, then an automatic resume after the timer. |
-| **Quit** | Asks the app to quit through macOS, so it can ask you about unsaved work. **Force quit** and **Kill** ask for confirmation first. |
+| **Quit** | After you confirm, asks the app to quit through macOS, so it can ask you about unsaved work. **Force quit** and **Kill** confirm too. |
 | **Guardian** | Efficiency mode, applied and released by rules, never on the frontmost app. |
 
 **What it cannot do, and says so instead of pretending:**

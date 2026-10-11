@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 — 2026-10-11
+
+- **Quit now asks first.** Quitting a single app from the Memory card used to happen on one click; it now shows a native confirmation (with how much memory the app uses). Bulk quit and Force quit already confirmed.
+
 ## 1.1.0 — 2026-10-11
 
 **New**
