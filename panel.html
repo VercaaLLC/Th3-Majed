@@ -1,208 +1,820 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Th3 Majed</title>
 <style>
+/* ---------------------------------------------------------------------------
+   Th3 Majed — panel. Dark-only "instrument cluster": obsidian glass, hairline
+   frames, one cyan→blue accent, status colours reserved for meaning.
+   Every colour is a token; nothing below the :root block hard-codes a hex.
+--------------------------------------------------------------------------- */
 :root {
-  --bg: #f5f5f7;
-  --card-bg: #ffffff;
-  --text: #1d1d1f;
-  --text-dim: #6e6e73;
-  --border: rgba(0,0,0,0.08);
-  --accent: #0071e3;
-  --green: #30b350;
-  --yellow: #d9a400;
-  --orange: #e8820c;
-  --red: #e5484d;
-  --track: rgba(0,0,0,0.08);
+  color-scheme: dark;
+  --void: #04070c;
+  --ink: #e9f1fb;
+  --ink-2: #9db0c6;          /* secondary text, 7.4:1 on --void */
+  --ink-3: #7388a1;          /* tertiary / labels, 4.9:1 */
+  --line: rgba(160, 200, 255, 0.10);
+  --line-2: rgba(160, 200, 255, 0.18);
+  --glass: rgba(255, 255, 255, 0.035);
+  --glass-2: rgba(255, 255, 255, 0.07);
+  --cyan: #3de8ff;
+  --blue: #4b8dff;
+  --violet: #a08cff;
+  --ok: #34f0a6;
+  --warn: #ffc25c;
+  --hot: #ff5d7c;
+  --on-accent: #03131c;
+  --font-ui: -apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --r-lg: 16px; --r-md: 11px; --r-sm: 8px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --t-fast: 140ms; --t-med: 260ms;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1c1e;
-    --card-bg: #2c2c2e;
-    --text: #f5f5f7;
-    --text-dim: #9b9ba1;
-    --border: rgba(255,255,255,0.09);
-    --track: rgba(255,255,255,0.13);
-  }
-}
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
-  margin: 0; padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  width: 360px;
+  margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
+  background: var(--void); color: var(--ink);
+  font: 13px/1.45 var(--font-ui);
+  -webkit-font-smoothing: antialiased; -webkit-user-select: none; user-select: none; cursor: default;
 }
-#panel { padding: 14px; }
-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
-.title-row { display: flex; align-items: center; gap: 7px; }
-.title-row .name { font-size: 15px; font-weight: 650; letter-spacing: -0.2px; }
-.verdict { color: var(--text-dim); font-size: 12px; line-height: 1.4; }
-.stats-row { display: flex; gap: 8px; margin: 10px 0 12px; }
-.pill { background: var(--card-bg); border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px; font-size: 10.5px; color: var(--text-dim); flex: 1; }
-.pill b { color: var(--text); font-size: 13px; font-weight: 600; display: block; margin-top: 1px; }
-.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
-.row { display: flex; align-items: center; gap: 9px; }
-.icon { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; background: var(--track); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
-.icon img { width: 100%; height: 100%; object-fit: contain; }
-.info { flex: 1; min-width: 0; }
-.name-line { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
-.gname { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
-.cpu { font-weight: 650; font-size: 13px; flex-shrink: 0; }
-.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.dot.green { background: var(--green); }
-.dot.yellow { background: var(--yellow); }
-.dot.orange { background: var(--orange); }
-.dot.red { background: var(--red); }
-.meta { color: var(--text-dim); font-size: 11px; margin-top: 1px; }
-.sparkline { margin-top: 7px; width: 100%; height: 22px; display: block; }
-.membar { height: 4px; border-radius: 2px; background: var(--track); margin-top: 7px; overflow: hidden; }
-.membar > div { height: 100%; background: var(--accent); border-radius: 2px; }
-.actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
-button { font: inherit; font-size: 11px; font-weight: 500; border: none; border-radius: 7px; padding: 5px 9px; cursor: pointer; background: var(--track); color: var(--text); transition: opacity .1s; }
-button.danger { background: var(--red); color: white; }
-button.safe { background: var(--accent); color: white; }
-button:active { opacity: 0.6; }
-details { margin-top: 7px; }
-summary { cursor: pointer; font-size: 11px; color: var(--text-dim); outline: none; list-style: none; }
-summary::-webkit-details-marker { display: none; }
-summary:before { content: "▸ "; }
-details[open] summary:before { content: "▾ "; }
-.subproc-block { border-top: 1px solid var(--border); padding: 6px 2px; }
-.subproc { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); }
-.subproc-block .actions button { padding: 4px 7px; font-size: 10.5px; }
-.protected-note { font-size: 11px; color: var(--text-dim); font-style: italic; margin-top: 7px; }
-.active-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
-.active-item button { font-size: 10.5px; }
-.footer { display: flex; justify-content: space-between; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
-.footer a { color: var(--text-dim); font-size: 11px; text-decoration: none; cursor: pointer; }
-.footer a:hover { color: var(--accent); }
-#empty-active { color: var(--text-dim); font-size: 11.5px; }
-.section-title { font-weight: 600; font-size: 11.5px; margin-bottom: 6px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.ic { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---- atmosphere ---------------------------------------------------------- */
+#app { position: relative; height: 100%; display: flex; flex-direction: column; isolation: isolate; }
+#app::before { /* soft light pools */
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background:
+    radial-gradient(420px 260px at 8% -4%, rgba(61, 232, 255, 0.16), transparent 70%),
+    radial-gradient(380px 300px at 100% 105%, rgba(160, 140, 255, 0.14), transparent 70%),
+    var(--void);
+}
+#app::after { /* engineering grid, fades out toward the bottom */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 28px 28px; opacity: 0.35;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+}
+
+/* ---- header ---------------------------------------------------------------- */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.brand { display: flex; align-items: center; gap: 11px; }
+.mark { position: relative; width: 36px; height: 36px; flex: none; }
+.mark svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mark .sweep {
+  position: absolute; inset: -3px; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 78%, rgba(61, 232, 255, 0.55) 100%);
+  -webkit-mask: radial-gradient(circle, transparent 15px, #000 16px, #000 19px, transparent 20px);
+  mask: radial-gradient(circle, transparent 15px, #000 16px, #000 19px, transparent 20px);
+  animation: sweep 5s linear infinite;
+}
+@keyframes sweep { to { transform: rotate(360deg); } }
+.title { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; line-height: 1.1; }
+.eyebrow { font: 600 9.5px/1 var(--font-mono); letter-spacing: 0.2em; color: var(--ink-3); text-transform: uppercase; margin-top: 4px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 99px;
+  font: 600 10.5px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--c, var(--ink-2)); background: color-mix(in srgb, var(--c, #fff) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c, #fff) 32%, transparent);
+  transition: color var(--t-med), background var(--t-med), border-color var(--t-med);
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+.s-nominal { --c: var(--ok); } .s-warm { --c: var(--warn); } .s-hot { --c: var(--hot); } .s-idle { --c: var(--ink-2); }
+
+/* ---- tabs ------------------------------------------------------------------- */
+.tabs { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 2px 16px 10px; padding: 3px; border-radius: 13px; background: var(--glass); border: 1px solid var(--line); }
+.tabs .ind { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 3); border-radius: 10px; background: linear-gradient(180deg, rgba(61, 232, 255, 0.18), rgba(75, 141, 255, 0.12)); border: 1px solid rgba(61, 232, 255, 0.35); box-shadow: 0 0 18px rgba(61, 232, 255, 0.16); transition: transform var(--t-med) var(--ease); }
+.tab { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 32px; border: 0; background: none; border-radius: 10px; font-weight: 550; font-size: 12.5px; color: var(--ink-2); transition: color var(--t-fast); }
+.tab[aria-selected="true"] { color: var(--ink); }
+.tab:hover { color: var(--ink); }
+
+/* ---- scroll area ---------------------------------------------------------------- */
+main { flex: 1; min-height: 0; position: relative; }
+.pane { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: 2px 16px 18px; opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease), visibility 0s linear var(--t-med); }
+.pane.on { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.pane::-webkit-scrollbar { width: 6px; } .pane::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---- primitives ------------------------------------------------------------------- */
+.verdict { margin: 0 2px; color: var(--ink-2); font-size: 12.5px; min-height: 18px; }
+.verdict b { color: var(--ink); font-weight: 600; }
+.card { position: relative; border-radius: var(--r-lg); padding: 14px; background: linear-gradient(180deg, var(--glass-2), var(--glass)); border: 1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.35); }
+.hud::before, .hud::after { content: ""; position: absolute; width: 12px; height: 12px; border: 1px solid var(--cyan); opacity: 0.7; pointer-events: none; }
+.hud::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; border-top-left-radius: var(--r-lg); }
+.hud::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; border-bottom-right-radius: var(--r-lg); }
+.label { display: flex; align-items: center; gap: 9px; font: 600 10.5px/1 var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-2), transparent); }
+.label .ic { width: 14px; height: 14px; color: var(--cyan); }
+.label .grow { display: none; }
+.h-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sec { margin-top: 4px; }
+.muted { color: var(--ink-2); font-size: 12px; }
+.fine { color: var(--ink-3); font-size: 11px; line-height: 1.4; }
+.tag { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 6px; font: 600 10px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, var(--ink-2)); background: color-mix(in srgb, var(--c, #fff) 12%, transparent); border: 1px solid color-mix(in srgb, var(--c, #fff) 26%, transparent); white-space: nowrap; }
+.tag.t-eff { --c: var(--ok); } .tag.t-lim { --c: var(--warn); } .tag.t-pau { --c: var(--violet); } .tag.t-front { --c: var(--cyan); } .tag.t-lock { --c: var(--ink-2); } .tag.t-info { --c: var(--blue); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 32px; padding: 0 12px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: var(--glass); color: var(--ink); font-size: 12px; font-weight: 550; white-space: nowrap; transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast), opacity var(--t-fast); }
+.btn:hover { background: var(--glass-2); border-color: rgba(160, 200, 255, 0.32); }
+.btn:active { transform: scale(0.98); }
+.btn.primary { color: var(--on-accent); border-color: transparent; background: linear-gradient(135deg, var(--cyan), var(--blue)); box-shadow: 0 6px 20px rgba(61, 232, 255, 0.22); font-weight: 650; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: #ffb2c0; background: rgba(255, 93, 124, 0.10); border-color: rgba(255, 93, 124, 0.34); }
+.btn.danger:hover { background: rgba(255, 93, 124, 0.18); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn.quiet:hover { color: var(--ink); background: var(--glass); }
+.btn.block { width: 100%; min-height: 40px; font-size: 13px; }
+.btn.sm { min-height: 28px; padding: 0 10px; font-size: 11.5px; }
+.btn[disabled] { opacity: 0.4; pointer-events: none; }
+.btn.busy { opacity: 0.55; pointer-events: none; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.switch { position: relative; width: 44px; height: 26px; flex: none; border-radius: 99px; border: 1px solid var(--line-2); background: var(--glass-2); padding: 0; transition: background var(--t-med), border-color var(--t-med); }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform var(--t-med) var(--ease), background var(--t-med); }
+.switch[aria-checked="true"] { background: linear-gradient(135deg, var(--cyan), var(--blue)); border-color: transparent; }
+.switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--on-accent); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 3px; gap: 2px; border-radius: 11px; background: var(--glass); border: 1px solid var(--line); }
+.seg button { height: 28px; border: 0; border-radius: 8px; background: none; color: var(--ink-2); font-size: 12px; font-weight: 550; transition: background var(--t-fast), color var(--t-fast); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { color: var(--ink); background: rgba(61, 232, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(61, 232, 255, 0.4); }
+.seg.off { opacity: 0.45; }
+
+/* ---- gauges --------------------------------------------------------------------------- */
+.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 6px; }
+.gauge { --c: var(--cyan); display: flex; flex-direction: column; align-items: center; }
+.gauge.g-warn { --c: var(--warn); } .gauge.g-hot { --c: var(--hot); }
+.gauge svg { width: 92px; height: 92px; overflow: visible; }
+.gauge .trk { fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 7; stroke-linecap: round; }
+.gauge .val { fill: none; stroke: var(--c); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0 100; transition: stroke-dasharray 700ms var(--ease), stroke 300ms; filter: drop-shadow(0 0 5px var(--c)); }
+.gauge .tick { fill: none; stroke: var(--ink-3); stroke-width: 3; stroke-dasharray: 0.4 3.17; opacity: 0.55; }
+.gauge .gv { font: 600 26px/1 var(--font-mono); fill: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.gauge .gu { font: 600 11px/1 var(--font-mono); fill: var(--ink-2); }
+.gauge .gl { margin-top: -6px; font: 650 11px/1 var(--font-mono); letter-spacing: 0.18em; color: var(--ink); }
+.gauge .gs { margin-top: 5px; font-size: 11px; color: var(--ink-3); text-align: center; min-height: 15px; }
+.readouts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.readout { display: flex; flex-direction: column; gap: 3px; padding: 0 4px; }
+.readout + .readout { border-left: 1px solid var(--line); padding-left: 12px; }
+.readout .k { font: 600 9.5px/1 var(--font-mono); letter-spacing: 0.16em; color: var(--ink-3); text-transform: uppercase; }
+.readout .v { font: 600 13px/1.1 var(--font-mono); color: var(--ink); }
+
+/* ---- chart ---------------------------------------------------------------------------------- */
+.chart { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.trace-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.trace-head .k { font: 600 9.5px/1 var(--font-mono); letter-spacing: 0.16em; color: var(--ink-3); text-transform: uppercase; }
+.chart svg { display: block; width: 100%; height: 46px; overflow: visible; }
+.chart .grid { vector-effect: non-scaling-stroke; stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+.chart .area { fill: url(#areaGrad); }
+.chart .line { vector-effect: non-scaling-stroke; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(61, 232, 255, 0.55)); }
+.chart .end { fill: var(--cyan); filter: drop-shadow(0 0 5px var(--cyan)); }
+
+/* ---- process rows ------------------------------------------------------------------------------ */
+.list { display: flex; flex-direction: column; gap: 8px; }
+.proc { position: relative; border-radius: 14px; border: 1px solid var(--line); background: linear-gradient(180deg, var(--glass-2), var(--glass)); overflow: hidden; transition: border-color var(--t-fast); }
+.proc:hover { border-color: var(--line-2); }
+.proc.open { border-color: rgba(61, 232, 255, 0.34); }
+.proc-head { display: grid; grid-template-columns: 34px 1fr 62px auto 14px; align-items: center; gap: 10px; width: 100%; padding: 9px 12px 10px; border: 0; background: none; text-align: left; }
+.ico { width: 34px; height: 34px; border-radius: 9px; overflow: hidden; display: grid; place-items: center; background: var(--glass-2); border: 1px solid var(--line); font: 650 14px/1 var(--font-ui); color: var(--ink-2); }
+.ico img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.who { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nm { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); min-width: 0; }
+.meta .mem { font-family: var(--font-mono); }
+.spark { width: 62px; height: 24px; overflow: visible; }
+.spark path { fill: none; stroke: var(--c, var(--cyan)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.cpu { font: 600 15px/1 var(--font-mono); text-align: right; min-width: 44px; color: var(--c, var(--ink)); }
+.cpu small { font-size: 10px; color: var(--ink-3); margin-left: 1px; }
+.chev { width: 14px; height: 14px; color: var(--ink-3); transition: transform var(--t-med) var(--ease); }
+.proc.open .chev { transform: rotate(180deg); }
+.bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--c, var(--cyan)); box-shadow: 0 0 8px var(--c, var(--cyan)); transition: width 600ms var(--ease), background 300ms; }
+.band-green { --c: var(--cyan); } .band-yellow { --c: var(--warn); } .band-orange { --c: #ff9a52; } .band-red { --c: var(--hot); }
+.proc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--t-med) var(--ease); }
+.proc.open .proc-body { grid-template-rows: 1fr; }
+.proc-body > .inner { overflow: hidden; min-height: 0; }
+.proc-pad { padding: 2px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+.note { display: flex; gap: 9px; padding: 9px 10px; border-radius: var(--r-md); background: rgba(75, 141, 255, 0.08); border: 1px solid rgba(75, 141, 255, 0.22); color: var(--ink-2); font-size: 11.5px; line-height: 1.45; }
+.note .ic { width: 15px; height: 15px; color: var(--blue); margin-top: 1px; }
+.note.lock { background: var(--glass); border-color: var(--line); } .note.lock .ic { color: var(--ink-3); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.actions .wide { grid-column: 1 / -1; }
+.members { border-top: 1px solid var(--line); padding-top: 6px; }
+.members summary { list-style: none; cursor: pointer; color: var(--ink-2); font-size: 11.5px; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+.members summary::-webkit-details-marker { display: none; }
+.members summary .ic { width: 12px; height: 12px; transition: transform var(--t-fast); }
+.members[open] summary .ic { transform: rotate(90deg); }
+.mrow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
+.mrow:first-of-type { border-top: 0; }
+.mrow .mn { min-width: 0; font: 500 11px/1.3 var(--font-mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow .mc { font: 600 11.5px/1 var(--font-mono); color: var(--ink); }
+.mbtns { display: flex; gap: 3px; }
+.icon-btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: var(--glass); color: var(--ink-2); padding: 0; transition: background var(--t-fast), color var(--t-fast); }
+.icon-btn:hover { background: var(--glass-2); color: var(--ink); }
+.icon-btn.danger:hover { color: var(--hot); }
+.icon-btn .ic { width: 14px; height: 14px; }
+
+/* ---- optimise ------------------------------------------------------------------------------------ */
+.hero h2 { margin: 12px 0 4px; font-size: 17px; line-height: 1.25; font-weight: 650; letter-spacing: -0.01em; }
+.hero p { margin: 0 0 12px; }
+.cand { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.cand-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 12px; }
+.cand-row .cn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cand-row .cc { font: 600 11.5px/1 var(--font-mono); color: var(--warn); }
+.cand-row .cb { grid-column: 1 / -1; height: 3px; border-radius: 2px; background: var(--glass-2); overflow: hidden; }
+.cand-row .cb i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--warn), #ff9a52); border-radius: 2px; transition: width 500ms var(--ease); }
+.g-line { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-2); margin-top: 10px; }
+.g-line .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.g-line.on .dot { background: var(--violet); box-shadow: 0 0 8px var(--violet); animation: pulse 2.4s ease-in-out infinite; }
+.guard h3, .set-title { margin: 0; font-size: 14px; font-weight: 620; }
+.membar { height: 8px; border-radius: 4px; background: var(--glass-2); overflow: hidden; margin: 10px 0 6px; }
+.membar i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, var(--cyan), var(--blue)); transition: width 700ms var(--ease), background 300ms; }
+.membar.warn i { background: linear-gradient(90deg, var(--warn), #ff9a52); } .membar.hot i { background: linear-gradient(90deg, var(--hot), #ff8a5c); }
+.app-row { display: grid; grid-template-columns: 28px 1fr auto auto; align-items: center; gap: 9px; padding: 7px 0; border-top: 1px solid var(--line); }
+.app-row:first-child { border-top: 0; }
+.app-row .ico { width: 28px; height: 28px; border-radius: 7px; font-size: 12px; }
+.app-row .an { font-weight: 560; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-row .am { font: 600 11.5px/1 var(--font-mono); color: var(--ink-2); }
+.ctl-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+.ctl-row:first-child { border-top: 0; }
+.empty { padding: 14px 4px 4px; text-align: center; color: var(--ink-3); font-size: 12px; }
+
+/* ---- settings --------------------------------------------------------------------------------------- */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.set-row:first-child { border-top: 0; padding-top: 2px; }
+.set-row .txt { min-width: 0; }
+.set-row .seg { width: 168px; flex: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip-x { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 10px; border-radius: 99px; background: var(--glass-2); border: 1px solid var(--line-2); font-size: 11.5px; }
+.chip-x button { width: 18px; height: 18px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--ink-2); }
+.chip-x button:hover { color: var(--hot); background: rgba(255, 93, 124, 0.12); }
+.chip-x .ic { width: 11px; height: 11px; }
+select.pick { width: 100%; height: 34px; margin-top: 8px; padding: 0 30px 0 11px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: var(--glass) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239db0c6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 10px center; color: var(--ink); font: inherit; font-size: 12px; -webkit-appearance: none; appearance: none; }
+select.pick option { background: #0c121b; color: var(--ink); }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.ver { font: 500 10.5px/1 var(--font-mono); color: var(--ink-3); letter-spacing: 0.08em; }
+
+/* ---- overlays --------------------------------------------------------------------------------------------- */
+#toast { position: absolute; left: 50%; bottom: 16px; z-index: 20; max-width: calc(100% - 32px); display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: 13px; background: rgba(10, 16, 26, 0.92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid var(--line-2); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55); font-size: 12px; opacity: 0; transform: translate(-50%, 12px); pointer-events: none; transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease); }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast .ic { color: var(--ok); } #toast.warn .ic { color: var(--warn); } #toast.guardian .ic { color: var(--violet); }
+#stale { position: absolute; left: 16px; right: 16px; top: 62px; z-index: 15; display: none; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 11px; background: rgba(255, 93, 124, 0.12); border: 1px solid rgba(255, 93, 124, 0.35); color: #ffc0cc; font-size: 12px; }
+#stale.show { display: flex; }
+.skel { background: linear-gradient(90deg, var(--glass) 25%, var(--glass-2) 50%, var(--glass) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 10px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; }
+}
 </style>
 </head>
 <body>
-<div id="panel">
-  <header>
-    <div class="title-row">
-      <span style="font-size:17px;">🖥️</span>
-      <span class="name">Th3 Majed</span>
-    </div>
-    <div class="verdict" id="verdict">Loading…</div>
-  </header>
-  <div class="stats-row">
-    <div class="pill">GPU<b id="gpu-val">—</b></div>
-    <div class="pill">System busy<b id="busy-val">—</b></div>
-    <div class="pill">Load<b id="load-val">—</b></div>
-  </div>
-  <div id="groups"></div>
-  <div class="card">
-    <div class="section-title">Active interventions</div>
-    <div id="active"><span id="empty-active">Nothing paused or throttled right now</span></div>
-  </div>
-  <div class="footer">
-    <a onclick="bridge('refresh')">Refresh now</a>
-    <a onclick="bridge('reveal_log')">Log</a>
-    <a onclick="bridge('about')">About</a>
-    <a onclick="bridge('quit')" style="color:var(--red)">Quit</a>
-  </div>
-</div>
-<script>
-function post(msg) {
-  try { window.webkit.messageHandlers.bridge.postMessage(msg); } catch (e) { console.log("bridge error", e); }
-}
-function bridge(action, extra) {
-  post(Object.assign({action: action}, extra || {}));
-}
-function esc(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;");
-}
-function sparkline(history) {
-  if (!history || history.length < 2) return "";
-  const w = 330, h = 20, max = Math.max(60, ...history);
-  const step = w / (history.length - 1);
-  const pts = history.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * h).toFixed(1)}`).join(" ");
-  return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <polyline points="${pts}" fill="none" style="stroke:var(--accent); stroke-width:1.5" />
-  </svg>`;
-}
-function actionsHtml(group) {
-  if (group.protected) {
-    const who = group.name === "Th3 Majed" ? "this app itself" : "a process your whole session depends on";
-    return `<div class="protected-note">Protected — ${esc(who)}, killing it would crash your session.</div>`;
-  }
-  const multi = group.members.length > 1;
-  const gnameJs = esc(group.name).replace(/\\/g, "\\\\");
-  if (multi) {
-    return `<div class="actions">
-      <button class="danger" onclick='bridge("kill_group", {group:"${gnameJs}"})'>Kill all ${group.members.length}</button>
-      <button onclick='bridge("pause_group", {group:"${gnameJs}", seconds:120})'>Pause 2m (all)</button>
-      <button class="safe" onclick='bridge("throttle_group", {group:"${gnameJs}"})'>Throttle all ~10%</button>
-    </div>`;
-  }
-  const m = group.members[0];
-  const nameJs = esc(m.name).replace(/\\/g, "\\\\");
-  return `<div class="actions">
-    <button class="danger" onclick='bridge("kill", {pid:${m.pid}, name:"${nameJs}"})'>Kill now</button>
-    <button onclick='bridge("stop_permanent", {pid:${m.pid}, name:"${nameJs}"})'>Stop permanently</button>
-    <button onclick='bridge("pause", {pid:${m.pid}, name:"${nameJs}", seconds:120})'>Pause 2m</button>
-    <button class="safe" onclick='bridge("throttle", {pid:${m.pid}, name:"${nameJs}"})'>Throttle ~10%</button>
-  </div>`;
-}
-function subprocActions(m) {
-  const nameJs = esc(m.name).replace(/\\/g, "\\\\");
-  return `<div class="actions" style="margin-top:5px">
-    <button class="danger" onclick='bridge("kill", {pid:${m.pid}, name:"${nameJs}"})'>Kill</button>
-    <button onclick='bridge("stop_permanent", {pid:${m.pid}, name:"${nameJs}"})'>Stop perm.</button>
-    <button onclick='bridge("pause", {pid:${m.pid}, name:"${nameJs}", seconds:120})'>Pause 2m</button>
-    <button class="safe" onclick='bridge("throttle", {pid:${m.pid}, name:"${nameJs}"})'>Throttle ~10%</button>
-  </div>`;
-}
-function groupHtml(group) {
-  const iconHtml = group.icon ? `<img src="${group.icon}">` : (group.band === "red" ? "🔥" : "⚙️");
-  const sub = group.members.length > 1
-    ? `<details><summary>${group.members.length} processes</summary>${group.members.map(m =>
-        `<div class="subproc-block">
-           <div class="subproc"><span>${esc(m.name)} (pid ${m.pid})</span><span>${m.cpu}%</span></div>
-           ${subprocActions(m)}
-         </div>`).join("")}</details>`
-    : "";
-  return `<div class="card">
-    <div class="row">
-      <div class="icon">${iconHtml}</div>
-      <div class="info">
-        <div class="name-line">
-          <span class="gname"><span class="dot ${group.band}"></span>${esc(group.name)}${group.members.length > 1 ? ` (${group.members.length})` : ""}</span>
-          <span class="cpu">${group.cpu.toFixed(0)}%</span>
-        </div>
-        <div class="meta">${group.mem.toFixed(1)}% memory</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3de8ff" stop-opacity="0.34"/><stop offset="1" stop-color="#3de8ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="markGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3de8ff"/><stop offset="1" stop-color="#4b8dff"/></linearGradient>
+  </defs>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
+  <symbol id="i-gpu" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-mem" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1"/><path d="m9 3.5 3 2.5 3-2.5M9 20.5l3-2.5 3 2.5M3.5 9 6 12l-2.5 3M20.5 9 18 12l2.5 3"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-apps" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/></symbol>
+</svg>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <i class="sweep"></i>
+        <svg viewBox="0 0 36 36" fill="none"><path d="M18 3.5 30.6 10.75v14.5L18 32.5 5.4 25.25v-14.5z" stroke="url(#markGrad)" stroke-width="1.6" fill="rgba(61,232,255,0.07)"/><path d="M13 12.6h9.2l-4.6 5.1c2.9-.3 5.3 1.4 5.3 4 0 2.5-2.1 4.5-5.6 4.5-2 0-3.8-.6-5-1.6" stroke="url(#markGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="title">Th3 Majed</div>
+        <div class="eyebrow">System Guardian</div>
       </div>
     </div>
-    ${sparkline(group.history)}
-    <div class="membar"><div style="width:${Math.min(100, group.mem * 2.5).toFixed(0)}%"></div></div>
-    ${actionsHtml(group)}
-    ${sub}
+    <div class="chip s-idle" id="chip" role="status"><i class="dot"></i><span id="chipText">Syncing</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <i class="ind" id="ind"></i>
+    <button class="tab" role="tab" id="t-monitor" aria-controls="p-monitor" aria-selected="true" data-act="tab" data-tab="monitor"><svg class="ic"><use href="#i-activity"/></svg>Monitor</button>
+    <button class="tab" role="tab" id="t-optimize" aria-controls="p-optimize" aria-selected="false" tabindex="-1" data-act="tab" data-tab="optimize"><svg class="ic"><use href="#i-snow"/></svg>Optimize</button>
+    <button class="tab" role="tab" id="t-settings" aria-controls="p-settings" aria-selected="false" tabindex="-1" data-act="tab" data-tab="settings"><svg class="ic"><use href="#i-sliders"/></svg>Settings</button>
+  </nav>
+
+  <div id="stale" role="alert"><svg class="ic"><use href="#i-info"/></svg><span>Signal lost. Reconnecting…</span></div>
+
+  <main>
+    <!-- ============================== MONITOR ============================== -->
+    <section class="pane on" id="p-monitor" role="tabpanel" aria-labelledby="t-monitor">
+      <div class="stack">
+        <p class="verdict" id="verdict"><span class="skel" style="display:inline-block;width:62%;height:14px"></span></p>
+
+        <div class="card hud">
+          <div class="label"><svg class="ic"><use href="#i-gauge"/></svg>Vitals</div>
+          <div class="gauges">
+            <div class="gauge" id="g-cpu"></div>
+            <div class="gauge" id="g-gpu"></div>
+            <div class="gauge" id="g-mem"></div>
+          </div>
+          <div class="chart">
+            <div class="trace-head"><span class="k">CPU · last 2 min</span><span class="fine mono" id="c-range"></span></div>
+            <svg id="chart" viewBox="0 0 330 66" preserveAspectRatio="none" role="img" aria-label="Total CPU use over the last two minutes">
+              <line class="grid" x1="0" y1="16.5" x2="330" y2="16.5"/><line class="grid" x1="0" y1="33" x2="330" y2="33"/><line class="grid" x1="0" y1="49.5" x2="330" y2="49.5"/>
+              <path class="area" id="c-area" d=""/><path class="line" id="c-line" d=""/><circle class="end" id="c-end" r="3" cx="-10" cy="-10"/>
+            </svg>
+          </div>
+          <div class="readouts">
+            <div class="readout"><span class="k">Thermal</span><span class="v" id="r-thermal">—</span></div>
+            <div class="readout"><span class="k">Load</span><span class="v" id="r-load">—</span></div>
+            <div class="readout"><span class="k">Swap</span><span class="v" id="r-swap">—</span></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="label" style="margin-bottom:8px"><svg class="ic"><use href="#i-cpu"/></svg>Heaviest right now</div>
+          <div class="list" id="procs">
+            <div class="skel" style="height:56px"></div><div class="skel" style="height:56px"></div><div class="skel" style="height:56px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== OPTIMIZE ============================== -->
+    <section class="pane" id="p-optimize" role="tabpanel" aria-labelledby="t-optimize">
+      <div class="stack">
+        <div class="card hud hero">
+          <div class="h-row"><div class="label" style="flex:1"><svg class="ic"><use href="#i-snow"/></svg>Cool down</div><span class="tag t-eff" id="cd-badge" hidden></span></div>
+          <h2 id="cd-title">Checking background activity…</h2>
+          <p class="muted" id="cd-sub">Moves busy background apps to Efficiency mode. They keep working, nothing is frozen or closed.</p>
+          <button class="btn primary block" id="cd-btn" data-act="cool_down" disabled><svg class="ic"><use href="#i-leaf"/></svg><span>Cool down now</span></button>
+          <div class="cand" id="cd-list" hidden></div>
+        </div>
+
+        <div class="card guard">
+          <div class="h-row">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0"><svg class="ic" style="color:var(--violet);width:20px;height:20px"><use href="#i-shield"/></svg><div><h3>Auto-Guardian</h3><div class="fine">Keeps things cool without you</div></div></div>
+            <button class="switch" role="switch" id="sw-guardian" aria-checked="false" aria-label="Auto-Guardian" data-act="toggle" data-key="guardian_enabled"></button>
+          </div>
+          <div class="seg" id="seg-profile" style="margin-top:12px">
+            <button data-act="set" data-key="guardian_profile" data-val="gentle" aria-pressed="false">Gentle</button>
+            <button data-act="set" data-key="guardian_profile" data-val="balanced" aria-pressed="true">Balanced</button>
+            <button data-act="set" data-key="guardian_profile" data-val="aggressive" aria-pressed="false">Aggressive</button>
+          </div>
+          <p class="fine" id="g-explain" style="margin:9px 0 0"></p>
+          <div class="g-line" id="g-line"><i class="dot"></i><span id="g-status">Off</span></div>
+        </div>
+
+        <div class="card">
+          <div class="h-row"><div class="label" style="flex:1"><svg class="ic"><use href="#i-mem"/></svg>Memory</div><span class="tag" id="m-tag">Normal</span></div>
+          <div class="membar" id="m-bar"><i></i></div>
+          <div class="h-row"><span class="mono" style="font-size:12.5px" id="m-text">—</span><span class="fine mono" id="m-swap"></span></div>
+          <div id="m-apps" style="margin-top:8px"></div>
+          <button class="btn block" id="m-quit-all" data-act="quit_idle" style="margin-top:8px" hidden><svg class="ic"><use href="#i-power"/></svg><span>Quit idle apps</span></button>
+          <p class="fine" style="margin:9px 0 0">Quitting asks each app politely, so anything with unsaved work will ask you first. The app you are using is never listed for bulk quit.</p>
+        </div>
+
+        <div class="card">
+          <div class="h-row"><div class="label" style="flex:1"><svg class="ic"><use href="#i-battery"/></svg>Power</div><span class="tag" id="p-tag">—</span></div>
+          <div class="h-row" style="margin-top:11px"><div><div style="font-weight:600" id="p-main">—</div><div class="fine" id="p-sub"></div></div>
+            <button class="btn sm" data-act="open_battery"><span>Battery settings</span><svg class="ic" style="width:13px;height:13px"><use href="#i-ext"/></svg></button></div>
+          <p class="fine" style="margin:9px 0 0">macOS only lets you switch Low Power Mode from System Settings, so Th3 Majed shows its state and takes you there.</p>
+        </div>
+
+        <div class="card" id="ctl-card">
+          <div class="h-row"><div class="label" style="flex:1"><svg class="ic"><use href="#i-lock"/></svg>Under control</div><button class="btn quiet sm" id="ctl-all" data-act="release_all" hidden>Release all</button></div>
+          <div id="ctl-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== SETTINGS ============================== -->
+    <section class="pane" id="p-settings" role="tabpanel" aria-labelledby="t-settings">
+      <div class="stack">
+        <div class="card">
+          <div class="set-row"><div class="txt"><div class="set-title">Refresh rate</div><div class="fine">How often the numbers update</div></div>
+            <div class="seg" data-setting="refresh_interval_seconds"><button data-act="set" data-key="refresh_interval_seconds" data-val="1">1s</button><button data-act="set" data-key="refresh_interval_seconds" data-val="2">2s</button><button data-act="set" data-key="refresh_interval_seconds" data-val="5">5s</button></div></div>
+          <div class="set-row"><div class="txt"><div class="set-title">Alert level</div><div class="fine">Notify when one app holds this much of a core for 20 s</div></div>
+            <div class="seg" data-setting="alert_threshold_percent"><button data-act="set" data-key="alert_threshold_percent" data-val="50">50%</button><button data-act="set" data-key="alert_threshold_percent" data-val="60">60%</button><button data-act="set" data-key="alert_threshold_percent" data-val="80">80%</button></div></div>
+          <div class="set-row"><div class="txt"><div class="set-title">Notifications</div><div class="fine">Alerts and Guardian actions</div></div>
+            <button class="switch" role="switch" id="sw-notifications" aria-checked="true" aria-label="Notifications" data-act="toggle" data-key="notifications"></button></div>
+          <div class="set-row"><div class="txt"><div class="set-title">Launch at login</div><div class="fine">Start Th3 Majed with your Mac</div></div>
+            <button class="switch" role="switch" id="sw-login" aria-checked="false" aria-label="Launch at login" data-act="toggle" data-key="launch_at_login"></button></div>
+        </div>
+
+        <div class="card">
+          <div class="label"><svg class="ic"><use href="#i-lock"/></svg>Never touch</div>
+          <p class="fine" style="margin:10px 0 0">Apps listed here are skipped by Cool down and the Guardian, whatever they do.</p>
+          <div class="chips" id="nt-chips"></div>
+          <select class="pick" id="nt-select" aria-label="Add an app to never touch"></select>
+        </div>
+
+        <div class="card foot">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn sm" data-act="reveal_log"><svg class="ic" style="width:13px;height:13px"><use href="#i-log"/></svg><span>Open log</span></button>
+            <button class="btn sm" data-act="about"><svg class="ic" style="width:13px;height:13px"><use href="#i-info"/></svg><span>About</span></button>
+          </div>
+          <button class="btn danger sm" data-act="quit"><svg class="ic" style="width:13px;height:13px"><use href="#i-power"/></svg><span>Quit Th3 Majed</span></button>
+        </div>
+        <div class="ver" style="text-align:center" id="ver">TH3 MAJED</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"><svg class="ic"><use href="#i-check"/></svg><span id="toast-text"></span></div>
+</div>
+
+<script>
+"use strict";
+/* ---------- bridge ---------- */
+function post(msg) { try { window.webkit.messageHandlers.bridge.postMessage(msg); } catch (e) { /* preview in a plain browser */ } }
+function bridge(action, extra) { post(Object.assign({ action: action }, extra || {})); }
+window.addEventListener("error", e => bridge("js_error", { message: String(e.message), line: e.lineno }));
+
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const ic = (id) => `<svg class="ic"><use href="#i-${id}"/></svg>`;
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtMem = (mb) => mb >= 1024 ? (mb / 1024).toFixed(mb >= 10240 ? 0 : 1) + " GB" : Math.round(mb) + " MB";
+const bandOf = (v) => v >= 85 ? "hot" : v >= 60 ? "warn" : "ok";
+const S = { tab: "monitor", state: null, open: new Set(), icons: {}, lastTs: 0, toastSeen: 0, sigs: {} };
+
+function ago(ts) {
+  const s = Math.max(0, Math.round(Date.now() / 1000 - ts));
+  return s < 5 ? "just now" : s < 60 ? s + " s ago" : s < 3600 ? Math.round(s / 60) + " min ago" : Math.round(s / 3600) + " h ago";
+}
+function smooth(pts) {
+  if (!pts.length) return "";
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], mx = (x0 + x1) / 2;
+    d += ` C${mx.toFixed(1)} ${y0.toFixed(1)} ${mx.toFixed(1)} ${y1.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  return d;
+}
+function btn(act, icon, label, data, cls) {
+  const attrs = Object.entries(data || {}).map(([k, v]) => ` data-${k}="${esc(v)}"`).join("");
+  return `<button class="btn ${cls || ""}" data-act="${act}"${attrs}>${ic(icon)}<span>${label}</span></button>`;
+}
+function iconBtn(act, icon, label, data, cls) {
+  const attrs = Object.entries(data || {}).map(([k, v]) => ` data-${k}="${esc(v)}"`).join("");
+  return `<button class="icon-btn ${cls || ""}" data-act="${act}"${attrs} title="${esc(label)}" aria-label="${esc(label)}">${ic(icon)}</button>`;
+}
+/* Keyed list: only touches the DOM that actually changed, so hover/focus/clicks survive the 2 s refresh. */
+function syncList(box, items, keyOf, build, sigOf, live) {
+  $$(":scope > :not([data-key])", box).forEach(el => el.remove());   // loading skeletons / stale placeholders
+  const existing = new Map($$(":scope > [data-key]", box).map(el => [el.dataset.key, el]));
+  items.forEach((it, i) => {
+    const k = keyOf(it), sig = sigOf(it);
+    let el = existing.get(k);
+    if (el) existing.delete(k);
+    if (!el) { el = document.createElement("div"); el.dataset.key = k; }
+    if (el._sig !== sig) { el.innerHTML = build(it); el._sig = sig; }
+    if (live) live(el, it);
+    if (box.children[i] !== el) box.insertBefore(el, box.children[i] || null);
+  });
+  existing.forEach(el => el.remove());
+}
+function iconHtml(name, iconId, size) {
+  const uri = iconId && S.icons[iconId];
+  return uri ? `<img alt="" src="${uri}">` : esc((name || "?").trim().charAt(0).toUpperCase());
+}
+
+/* ---------- tabs ---------- */
+const TABS = ["monitor", "optimize", "settings"];
+function setTab(name, focus) {
+  S.tab = name;
+  TABS.forEach(t => {
+    $("#p-" + t).classList.toggle("on", t === name);
+    const b = $("#t-" + t); b.setAttribute("aria-selected", t === name); b.tabIndex = t === name ? 0 : -1;
+  });
+  $("#ind").style.transform = `translateX(${TABS.indexOf(name) * 100}%)`;
+  if (focus) $("#t-" + name).focus();
+  if (S.state) render(S.state);
+}
+document.querySelector(".tabs").addEventListener("keydown", e => {
+  const i = TABS.indexOf(S.tab);
+  if (e.key === "ArrowRight") { e.preventDefault(); setTab(TABS[(i + 1) % 3], true); }
+  if (e.key === "ArrowLeft") { e.preventDefault(); setTab(TABS[(i + 2) % 3], true); }
+});
+
+/* ---------- gauges ---------- */
+const ARC = "M26.06 93.94 A48 48 0 1 1 93.94 93.94", TICKS = "M20.4 99.6 A56 56 0 1 1 99.6 99.6";
+function gaugeShell(id, label) {
+  $("#" + id).innerHTML = `<svg viewBox="0 0 120 120" role="img" aria-label="${label}">
+    <path class="tick" d="${TICKS}" pathLength="100"/><path class="trk" d="${ARC}" pathLength="100"/><path class="val" d="${ARC}" pathLength="100"/>
+    <text class="gv" x="60" y="62" text-anchor="middle">—</text><text class="gu" x="60" y="80" text-anchor="middle">%</text></svg>
+    <div class="gl">${label}</div><div class="gs">&nbsp;</div>`;
+}
+function setGauge(id, pct, text, band, sub, aria) {
+  const g = $("#" + id);
+  g.className = "gauge g-" + band;
+  $(".val", g).style.strokeDasharray = `${Math.max(0, Math.min(100, pct))} 100`;
+  $(".gv", g).textContent = text;
+  $(".gu", g).textContent = text === "n/a" || text === "—" ? "" : "%";
+  $(".gs", g).textContent = sub;
+  $("svg", g).setAttribute("aria-label", aria);
+}
+
+/* ---------- monitor ---------- */
+function renderMonitor(s) {
+  const v = $("#verdict");
+  if (v._t !== s.verdict) { v.textContent = s.verdict; v._t = s.verdict; }
+  const sysb = s.system.busy;
+  setGauge("g-cpu", sysb, Math.round(sysb), bandOf(sysb), s.system.ncpu + " cores", `CPU ${Math.round(sysb)} percent`);
+  if (s.gpu == null) setGauge("g-gpu", 0, "n/a", "ok", "not reported", "GPU not reported");
+  else setGauge("g-gpu", s.gpu, s.gpu, bandOf(s.gpu), "system-wide", `GPU ${s.gpu} percent`);
+  const pBand = s.mem.pressure === "critical" ? "hot" : s.mem.pressure === "warn" ? "warn" : (s.mem.percent >= 90 ? "warn" : "ok");
+  setGauge("g-mem", s.mem.percent, Math.round(s.mem.percent), pBand, s.mem.used_gb + " / " + s.mem.total_gb + " GB", `Memory ${Math.round(s.mem.percent)} percent used`);
+
+  const th = $("#r-thermal"); th.textContent = s.system.thermal_label; th.style.color = s.system.thermal >= 2 ? "var(--hot)" : s.system.thermal === 1 ? "var(--warn)" : "var(--ok)";
+  $("#r-load").textContent = s.system.load1.toFixed(1) + " / " + s.system.ncpu;
+  $("#r-swap").textContent = s.mem.swap_gb.toFixed(1) + " GB";
+
+  const h = s.system.history, n = 60, W = 330, H = 66;
+  const pts = h.map((val, i) => [W * (n - h.length + i) / (n - 1), H - 4 - (Math.min(100, val) / 100) * (H - 10)]);
+  if (pts.length > 1) {
+    const line = smooth(pts);
+    $("#c-line").setAttribute("d", line);
+    $("#c-area").setAttribute("d", `${line} L${pts[pts.length - 1][0].toFixed(1)} ${H} L${pts[0][0].toFixed(1)} ${H} Z`);
+    $("#c-end").setAttribute("cx", pts[pts.length - 1][0]); $("#c-end").setAttribute("cy", pts[pts.length - 1][1]);
+    $("#c-range").textContent = "peak " + Math.round(Math.max(...h)) + "%  ·  avg " + Math.round(h.reduce((a, b) => a + b, 0) / h.length) + "%";
+  }
+
+  syncList($("#procs"), s.groups, g => g.name, procBuild, procSig, procLive);
+}
+function procSig(g) { return "h"; }  // the header markup is static; everything dynamic is patched in procLive
+function procBuild(g) {
+  return `<div class="proc" data-wrap="proc">
+    <button class="proc-head" data-act="toggle_row" data-name="${esc(g.name)}" aria-expanded="false">
+      <span class="ico"></span>
+      <span class="who"><span class="nm"></span><span class="meta"></span></span>
+      <svg class="spark" viewBox="0 0 62 24" preserveAspectRatio="none" aria-hidden="true"><path d=""/></svg>
+      <span class="cpu"></span>
+      <svg class="ic chev"><use href="#i-chev"/></svg>
+    </button>
+    <div class="proc-body"><div class="inner"><div class="proc-pad"></div></div></div>
+    <i class="bar"></i>
   </div>`;
 }
-function update(state) {
-  document.getElementById("verdict").textContent = state.verdict;
-  document.getElementById("gpu-val").textContent = state.gpu != null ? state.gpu + "%" : "n/a";
-  document.getElementById("busy-val").textContent = state.thermal ? state.thermal.busy.toFixed(0) + "%" : "n/a";
-  document.getElementById("load-val").textContent = state.thermal ? state.thermal.load1.toFixed(1) + "/" + state.thermal.ncpu : "n/a";
-  document.getElementById("groups").innerHTML = state.groups.map(groupHtml).join("");
-  const activeEl = document.getElementById("active");
-  const items = [];
-  (state.active.paused || []).forEach(p => items.push(
-    `<div class="active-item"><span>⏸ ${esc(p.name)} (pid ${p.pid})</span><button onclick='bridge("resume", {pid:${p.pid}, name:"${esc(p.name)}"})'>Resume</button></div>`));
-  (state.active.throttled || []).forEach(t => items.push(
-    `<div class="active-item"><span>🐢 ${esc(t.name)} (pid ${t.pid})</span><button onclick='bridge("unthrottle", {pid:${t.pid}})'>Stop</button></div>`));
-  activeEl.innerHTML = items.length ? items.join("") : '<span id="empty-active">Nothing paused or throttled right now</span>';
+function procLive(el, g) {
+  const root = el.firstElementChild; if (!root) return;
+  root.className = "proc band-" + g.band + (S.open.has(g.name) ? " open" : "");
+  const head = $(".proc-head", root);
+  head.setAttribute("aria-expanded", S.open.has(g.name));
+  const icoSig = g.icon && S.icons[g.icon] ? "i" + g.icon : "l";
+  const ico = $(".ico", root);
+  if (ico._s !== icoSig) { ico.innerHTML = iconHtml(g.name, g.icon); ico._s = icoSig; }
+  $(".nm", root).textContent = g.name;
+  const tags = (g.member_count > 1 ? `<span class="tag">${g.member_count} procs</span>` : "")
+    + (g.front ? `<span class="tag t-front">In use</span>` : "")
+    + g.state.map(x => x === "efficiency" ? `<span class="tag t-eff">Efficiency</span>` : x === "limited" ? `<span class="tag t-lim">Limited</span>` : `<span class="tag t-pau">Paused</span>`).join("")
+    + (g.protected ? `<span class="tag t-lock">Protected</span>` : "");
+  const metaSig = fmtMem(g.mem_mb) + tags;
+  const meta = $(".meta", root);
+  if (meta._s !== metaSig) { meta.innerHTML = `<span class="mem">${fmtMem(g.mem_mb)}</span>${tags}`; meta._s = metaSig; }
+  $(".cpu", root).innerHTML = Math.round(g.cpu) + "<small>%</small>";
+  $(".bar", root).style.width = Math.min(100, g.cpu) + "%";
+  const hist = g.history, mx = Math.max(60, ...hist);
+  const p = hist.map((v, i) => [62 * i / Math.max(1, hist.length - 1), 22 - (v / mx) * 20]);
+  $(".spark path", root).setAttribute("d", p.length > 1 ? smooth(p) : "");
+  // Detail panel: rebuilt only when its structure changes, cpu figures patched in place.
+  const sig = JSON.stringify([g.state, g.protected, g.controllable, g.is_app, g.members.map(m => [m.pid, m.state, m.owned])]);
+  const pad = $(".proc-pad", root);
+  if (S.open.has(g.name)) {
+    if (pad._sig !== sig) { pad.innerHTML = procDetail(g); pad._sig = sig; }
+    $$("[data-cpu-pid]", pad).forEach(c => { const m = g.members.find(x => x.pid == c.dataset.cpuPid); if (m) c.textContent = m.cpu + "%"; });
+  }
+}
+function procDetail(g) {
+  const out = [];
+  if (g.info) {
+    const tagCls = g.info.safety === "never" ? "t-lock" : g.info.safety === "careful" ? "t-lim" : "t-eff";
+    const tagTxt = g.info.safety === "never" ? "Protected" : g.info.safety === "careful" ? "Limit with care" : "Safe to limit";
+    out.push(`<div class="note">${ic("info")}<div><span class="tag ${tagCls}" style="margin-bottom:5px">${tagTxt}</span><br>${esc(g.info.text)}</div></div>`);
+  }
+  if (g.protected) {
+    out.push(`<div class="note lock">${ic("lock")}<div>${g.is_self ? "This is Th3 Majed itself." : "A process your whole session depends on."} Killing it would crash your session, so there are no controls.</div></div>`);
+    return out.join("");
+  }
+  if (!g.controllable) {
+    out.push(`<div class="note lock">${ic("lock")}<div>Owned by macOS itself, so the system does not allow other apps to change it. Th3 Majed can show it, but not control it.</div></div>`);
+    return out.join("");
+  }
+  const multi = g.member_count > 1, single = g.members[0];
+  const controlled = g.state.length > 0;
+  if (controlled) out.push(btn("release_group", "check", "Back to normal", { group: g.name }, "primary block"));
+  const grp = { group: g.name };
+  if (multi) {
+    out.push(`<div class="actions">
+      ${btn("efficiency_group", "leaf", "Efficiency · all", grp)}
+      ${btn("throttle_group", "gauge", "Limit to ~10%", grp)}
+      ${btn("pause_group", "pause", "Pause 2 min", grp)}
+      ${g.is_app ? btn("quit_app", "power", "Quit app", { pid: g.members.find(m => m.name === g.name)?.pid ?? g.members[0].pid, name: g.name }, "danger") : btn("kill_group", "ban", "Kill all " + g.member_count, grp, "danger")}
+    </div>`);
+    out.push(`<details class="members"><summary>${ic("chev-r")}${g.member_count} processes${g.member_count > g.members.length ? " (top " + g.members.length + ")" : ""}</summary>${g.members.map(m => {
+      const d = { pid: m.pid, name: m.name };
+      return `<div class="mrow"><span class="mn" title="${esc(m.name)}">${esc(m.name)} · ${m.pid}</span><span class="mc" data-cpu-pid="${m.pid}">${m.cpu}%</span>
+        <span class="mbtns">${m.owned ? iconBtn("efficiency", "leaf", "Efficiency mode", d) + iconBtn("throttle", "gauge", "Limit to 10%", d) + iconBtn("pause", "pause", "Pause 2 min", d) + iconBtn("kill", "ban", "Kill", d, "danger") : `<span class="tag t-lock">System</span>`}</span></div>`;
+    }).join("")}</details>`);
+  } else {
+    const d = { pid: single.pid, name: single.name };
+    out.push(`<div class="actions">
+      ${btn("efficiency", "leaf", "Efficiency mode", d)}
+      ${btn("throttle", "gauge", "Limit to ~10%", d)}
+      ${btn("pause", "pause", "Pause 2 min", d)}
+      ${g.is_app ? btn("quit_app", "power", "Quit app", d, "danger") : btn("kill", "ban", "Kill now", d, "danger")}
+    </div>`);
+    if (!g.is_app) out.push(`<button class="btn quiet sm" data-act="stop_permanent" data-pid="${single.pid}" data-name="${esc(single.name)}">Stop permanently (launchd)…</button>`);
+    else out.push(`<button class="btn quiet sm" data-act="force_quit_app" data-pid="${single.pid}" data-name="${esc(single.name)}">Force quit…</button>`);
+  }
+  return out.join("");
+}
+
+/* ---------- optimize ---------- */
+function renderOptimize(s) {
+  // cool down
+  const c = s.candidates, tot = c.reduce((a, x) => a + x.cpu, 0);
+  const btnEl = $("#cd-btn"), list = $("#cd-list"), badge = $("#cd-badge");
+  if (c.length) {
+    const names = c.slice(0, 2).map(x => x.name).join(", ");
+    $("#cd-title").textContent = c.length > 2 ? `${names} and ${c.length - 2} more are heating things up` : `${names} ${c.length > 1 ? "are" : "is"} heating things up`;
+    $("#cd-sub").textContent = `${c.length} background app${c.length > 1 ? "s" : ""} using about ${Math.round(tot)}% of a core. Efficiency mode keeps them running on the quiet cores.`;
+    btnEl.disabled = false; badge.hidden = false; badge.textContent = c.length + (c.length > 1 ? " apps" : " app");
+    list.hidden = false;
+    syncList(list, c, x => x.name,
+      x => `<div class="cand-row" data-wrap="cand-row"><span class="cn"></span><span class="cc"></span><span class="cb"><i></i></span></div>`,
+      () => "c",
+      (el, x) => { $(".cn", el).textContent = x.name + (x.count > 1 ? ` · ${x.count} procs` : ""); $(".cc", el).textContent = Math.round(x.cpu) + "%"; $(".cb i", el).style.width = Math.min(100, x.cpu) + "%"; });
+  } else {
+    $("#cd-title").textContent = "All quiet in the background";
+    $("#cd-sub").textContent = "No background app is working hard right now. Cool down becomes available when one does.";
+    btnEl.disabled = true; badge.hidden = true; list.hidden = true;
+  }
+  // guardian
+  const g = s.guardian, sw = $("#sw-guardian");
+  sw.setAttribute("aria-checked", g.enabled);
+  $$("#seg-profile button").forEach(b => b.setAttribute("aria-pressed", b.dataset.val === g.profile));
+  $("#seg-profile").classList.toggle("off", !g.enabled);
+  const pr = g.profiles[g.profile];
+  $("#g-explain").textContent = `Acts when a background app stays above ${pr.cpu}% of a core for ${pr.sustain} s. It never touches the app you are using, protected system processes or your Never-touch list, and it hands control back when the app calms down or you switch to it.`;
+  $("#g-line").classList.toggle("on", g.enabled);
+  $("#g-status").textContent = !g.enabled ? "Off" : g.last ? `Watching · last: ${g.last.text}, ${ago(g.last.at)}` : "Watching · no action needed yet";
+  // memory
+  const m = s.mem;
+  $("#m-text").textContent = `${m.used_gb} of ${m.total_gb} GB in use`;
+  $("#m-swap").textContent = "swap " + m.swap_gb.toFixed(1) + " GB";
+  const mb = bandOf(m.pressure === "critical" ? 100 : m.pressure === "warn" ? 70 : m.percent >= 90 ? 70 : 0);
+  $("#m-bar").className = "membar " + (mb === "ok" ? "" : mb); $("#m-bar i").style.width = m.percent + "%";
+  const mt = $("#m-tag"); mt.textContent = m.pressure === "normal" ? "Pressure normal" : m.pressure === "warn" ? "Pressure rising" : "Pressure critical";
+  mt.className = "tag " + (m.pressure === "normal" ? "t-eff" : m.pressure === "warn" ? "t-lim" : ""); if (m.pressure === "critical") mt.style.setProperty("--c", "var(--hot)"); else mt.style.removeProperty("--c");
+  const apps = s.apps, box = $("#m-apps");
+  if (!apps.length) { if (box._empty !== 1) { box.innerHTML = `<div class="empty">No app is using a lot of memory.</div>`; box._empty = 1; } }
+  else {
+    if (box._empty) { box.innerHTML = ""; box._empty = 0; }
+    syncList(box, apps, a => a.name,
+      a => `<div class="app-row" data-wrap="app-row"><span class="ico"></span><span class="an"></span><span class="am"></span><span class="act"></span></div>`,
+      a => a.front + ":" + a.locked + ":" + (S.icons[a.icon] ? 1 : 0),
+      (el, a) => {
+        const ico = $(".ico", el); if (ico._s !== (S.icons[a.icon] ? "i" : "l")) { ico.innerHTML = iconHtml(a.name, a.icon); ico._s = S.icons[a.icon] ? "i" : "l"; }
+        $(".an", el).textContent = a.name; $(".am", el).textContent = fmtMem(a.mem_mb);
+        const act = $(".act", el), want = a.front ? "front" : a.locked ? "lock" : "quit";
+        if (act._s !== want) {
+          act.innerHTML = a.front ? `<span class="tag t-front">In use</span>` : a.locked ? `<span class="tag t-lock">Kept</span>` : btn("quit_app", "power", "Quit", { pid: a.pid, name: a.name }, "sm");
+          act._s = want;
+        }
+      });
+  }
+  const idle = apps.filter(a => !a.front && !a.locked);
+  const qa = $("#m-quit-all"); qa.hidden = idle.length < 2; $("span", qa).textContent = `Quit ${idle.length} idle apps`;
+  // power
+  const pw = s.power, lp = pw.low_power;
+  $("#p-main").textContent = pw.battery == null ? "No battery" : pw.battery + "%" + (pw.plugged ? " · Plugged in" : " · On battery");
+  $("#p-sub").textContent = "Low Power Mode is " + (lp ? "on" : "off");
+  const pt = $("#p-tag"); pt.textContent = lp ? "Low Power" : "Normal"; pt.className = "tag " + (lp ? "t-eff" : "");
+  // under control
+  const ctl = s.controlled;
+  $("#ctl-all").hidden = ctl.length < 2;
+  const cl = $("#ctl-list");
+  if (!ctl.length) { if (cl._empty !== 1) { cl.innerHTML = `<div class="empty">Nothing is limited right now. Everything runs at full speed.</div>`; cl._empty = 1; } }
+  else {
+    if (cl._empty) { cl.innerHTML = ""; cl._empty = 0; }
+    syncList(cl, ctl, x => x.pid + x.kind,
+      x => `<div class="ctl-row" data-wrap="ctl-row"><span class="cn" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><span class="tg"></span>${btn("release", "check", "Release", { pid: x.pid }, "sm")}</div>`,
+      x => x.pid + x.kind + x.auto,
+      (el, x) => {
+        $(".cn", el).textContent = x.name + " · " + x.pid;
+        $(".tg", el).innerHTML = x.kind === "efficiency" ? `<span class="tag t-eff">${x.auto ? "Guardian" : "Efficiency"}</span>` : x.kind === "limited" ? `<span class="tag t-lim">Limited</span>` : `<span class="tag t-pau">Paused</span>`;
+      });
+  }
+}
+
+/* ---------- settings ---------- */
+function renderSettings(s) {
+  const st = s.settings;
+  $$("[data-setting]").forEach(seg => $$("button", seg).forEach(b => b.setAttribute("aria-pressed", String(st[seg.dataset.setting]) === b.dataset.val)));
+  $("#sw-notifications").setAttribute("aria-checked", st.notifications);
+  $("#sw-login").setAttribute("aria-checked", st.launch_at_login);
+  const ntSig = JSON.stringify(st.never_touch), chips = $("#nt-chips");
+  if (chips._s !== ntSig) {
+    chips.innerHTML = st.never_touch.length ? st.never_touch.map(n => `<span class="chip-x">${esc(n)}<button data-act="never_remove" data-name="${esc(n)}" aria-label="Remove ${esc(n)}">${ic("x")}</button></span>`).join("") : `<span class="fine">Nothing yet.</span>`;
+    chips._s = ntSig;
+  }
+  const opts = st.running_apps.filter(n => !st.never_touch.includes(n)), sel = $("#nt-select"), selSig = JSON.stringify(opts);
+  if (sel._s !== selSig) { sel.innerHTML = `<option value="">Add an app…</option>` + opts.map(n => `<option>${esc(n)}</option>`).join(""); sel._s = selSig; }
+  $("#ver").textContent = "TH3 MAJED  ·  V" + s.version;
+}
+$("#nt-select").addEventListener("change", e => { if (e.target.value) { bridge("never_add", { name: e.target.value }); e.target.value = ""; } });
+
+/* ---------- header / toast / render ---------- */
+function renderHeader(s) {
+  const chip = $("#chip");
+  chip.className = "chip s-" + s.state;
+  $("#chipText").textContent = s.state === "nominal" ? "Nominal" : s.state === "warm" ? "Warm" : "Hot";
+}
+let toastTimer;
+function toast(kind, text) {
+  const t = $("#toast"); t.className = "show " + kind; $("#toast-text").textContent = text;
+  $("use", t).setAttribute("href", kind === "warn" ? "#i-info" : kind === "guardian" ? "#i-shield" : "#i-check");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3800);
+}
+function render(s) {
+  renderHeader(s);
+  if (S.tab === "monitor") renderMonitor(s);
+  else if (S.tab === "optimize") renderOptimize(s);
+  else renderSettings(s);
 }
 window.updateState = function (json) {
-  try { update(JSON.parse(json)); } catch (e) { console.log("update error", e); }
+  try {
+    const s = typeof json === "string" ? JSON.parse(json) : json;
+    Object.assign(S.icons, s.icons || {});
+    S.state = s; S.lastTs = Date.now();
+    $("#stale").classList.remove("show");
+    (s.toasts || []).forEach(t => { if (t.id > S.toastSeen) { S.toastSeen = t.id; toast(t.kind, t.text); } });
+    render(s);
+  } catch (e) { bridge("js_error", { message: "update: " + e.message }); }
 };
+setInterval(() => { if (S.lastTs && Date.now() - S.lastTs > 9000) $("#stale").classList.add("show"); }, 2000);
+
+/* ---------- clicks ---------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-act]");
+  if (!t || t.disabled) return;
+  const a = t.dataset.act, d = t.dataset;
+  const pidName = () => ({ pid: +d.pid, name: d.name });
+  switch (a) {
+    case "tab": setTab(d.tab); return;
+    case "toggle_row": {
+      const root = t.closest(".proc");
+      if (S.open.has(d.name)) S.open.delete(d.name); else S.open.add(d.name);
+      const g = S.state && S.state.groups.find(x => x.name === d.name);
+      if (g) { const el = root.parentElement; procLive(el, g); }
+      return;
+    }
+    case "toggle": bridge("set", { key: d.key, value: t.getAttribute("aria-checked") !== "true" }); t.setAttribute("aria-checked", t.getAttribute("aria-checked") !== "true"); return;
+    case "set": bridge("set", { key: d.key, value: JSON.parse(d.val.match(/^[0-9.]+$/) ? d.val : JSON.stringify(d.val)) }); return;
+    case "never_remove": bridge("never_remove", { name: d.name }); return;
+    case "efficiency": case "throttle": case "pause": case "kill": case "stop_permanent": case "quit_app": case "force_quit_app":
+      bridge(a, Object.assign(pidName(), a === "pause" ? { seconds: 120 } : {})); break;
+    case "release": bridge("release", { pid: +d.pid }); break;
+    case "efficiency_group": case "throttle_group": case "kill_group": case "release_group":
+      bridge(a, { group: d.group }); break;
+    case "pause_group": bridge("pause_group", { group: d.group, seconds: 120 }); break;
+    case "quit_idle": bridge("quit_idle"); break;
+    default: bridge(a); break;   // cool_down, release_all, open_battery, reveal_log, about, quit
+  }
+  if (t.classList.contains("btn")) { t.classList.add("busy"); setTimeout(() => t.classList.remove("busy"), 900); }
+});
+
+/* ---------- boot ---------- */
+gaugeShell("g-cpu", "CPU"); gaugeShell("g-gpu", "GPU"); gaugeShell("g-mem", "MEMORY");
+setTab("monitor");
+window.__th3ready = true;
+bridge("ready");
 </script>
 </body>
 </html>
